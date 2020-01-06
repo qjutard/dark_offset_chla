@@ -19,6 +19,7 @@ source(paste(path_to_source, "open_profiles.R", sep=""))
 ### Set parameters
 
 WMO = "6901524"
+median_size = 3
 
 ### Build list of file names from WMO and argo_index
 
@@ -32,7 +33,19 @@ name_list = file_names(index_ifremer, path_to_netcdf_before_WMO, WMO, path_to_ne
 numCores = detectCores()
 M = mcmapply(open_profiles, name_list, MoreArgs=list("CHLA"), mc.cores=numCores, USE.NAMES=FALSE)
 
+### compute minima
 
+n_prof = dim(M)[2]
+all_minima = rep(NA, n_prof)
+for (i in seq(1, n_prof)) {
+    chla = M[,i]$PARAM
+    chla = chla[which(!is.na(chla))]
+    chla_smoothed = runmed(chla, median_size, endrule="constant")
+    all_minima[i] = min(chla_smoothed)
+}
+
+offset_1 = all_minima
+offset_3 = rep(median(all_minima, na.rm=T), n_prof)
 
 ### plot
 
