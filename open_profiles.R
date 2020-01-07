@@ -75,7 +75,7 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer) {
     profile_actual = profile_actual[length(profile_actual)]
     profile_actual = str_sub(profile_actual,3,14)
     path_to_netcdf = "/DATA/ftp.ifremer.fr/ifremer/argo/dac/"
-    L = process_file(profile_actual, index_ifremer, path_to_netcdf, DEEP_EST=DEEP_EST, accept_descent=TRUE)
+    L = process_file(profile_actual, index_ifremer, path_to_netcdf, DEEP_EST=DEEP_EST, accept_descent=TRUE, offset_override="dmmc")
     
     if (is.list(L)) {
         DMMC_offset = L$chl_dark_offset
