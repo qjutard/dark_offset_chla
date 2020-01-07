@@ -77,12 +77,13 @@ for (i in seq(1, n_prof)) {
     chla = chla[which(!is.na(chla))]
     
     chla_smoothed = runmed(chla, median_size, endrule="constant")
-    all_minima[i] = min(chla_smoothed)
+    all_minima[i] = min(chla_smoothed, na.rm = T)
     
     offset_auto[i] = (M[,i]$DARK_CHLA - factory_dark) * M[,i]$SCALE_CHLA
     
     offset_DMMC[i] = M[,i]$DMMC_offset
 }
+all_minima[which(is.infinite(all_minima))] = NA
 
 offset_1 = all_minima
 offset_3 = rep(median(all_minima, na.rm=T), n_prof)

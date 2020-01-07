@@ -20,7 +20,7 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer) {
 	param_name_padded = str_pad(PARAM_NAME, 64, "right")
 	id_prof = which(parameters==param_name_padded, arr.ind=TRUE)[2]
 	if (is.na(id_prof))	{
-		return(list("PARAM"=NA, "PRES"=NA, "PARAM_QC"=NA, "JULD"=NA, "param_units"=NA, "profile_id"=NA, "SCALE_CHLA"=chla_scale, "DARK_CHLA"=chla_dark))
+		return(list("PARAM"=NA, "PRES"=NA, "PARAM_QC"=NA, "JULD"=NA, "param_units"=NA, "profile_id"=NA, "SCALE_CHLA"=NA, "DARK_CHLA"=NA,"DMMC_offset"=NA))
 	}
 
 	### get the parameter
