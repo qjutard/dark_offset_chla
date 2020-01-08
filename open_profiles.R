@@ -24,12 +24,12 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer) {
 	}
 
 	### get the parameter
-	PARAM = ncvar_get(filenc, PARAM_NAME)
-	PARAM = PARAM[,id_prof]
+	PARAM = ncvar_get(filenc, PARAM_NAME, start=c(1,id_prof), count=c(-1,1))
+	#PARAM = PARAM[,id_prof]
 
 	### get the pressure
-	PRES = ncvar_get(filenc, "PRES")	
-	PRES = PRES[,id_prof]
+	PRES = ncvar_get(filenc, "PRES", start=c(1,id_prof), count=c(-1,1))	
+	#PRES = PRES[,id_prof]
 
 	### get the QC
 	PARAM_NAME_QC = paste(PARAM_NAME, "_QC", sep="")
