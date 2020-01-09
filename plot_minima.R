@@ -3,7 +3,7 @@
 # compare methods 1 and 3 from the ADMT20 presentation by Xing
 #############################################################################
 
-plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, plot_name) {
+plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, plot_name, y_zoom) {
     n_prof = dim(M)[2]
     
     juld = rep(NA, n_prof)
@@ -24,9 +24,13 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
     png(plot_name, width = 800, height = 400)
     
     Xrange = range(as.numeric(dates), na.rm=T)
-    Yrange = range(c(offset_1, offset_auto, offset_DMMC), na.rm=T)
-    Yrange[2] = Yrange[2]+(Yrange[2]-Yrange[1])*0.4
-    
+	if (is.null(y_zoom)) {
+    	Yrange = range(c(offset_1, offset_auto, offset_DMMC), na.rm=T)
+    	Yrange[2] = Yrange[2]+(Yrange[2]-Yrange[1])*0.4
+    } else {
+		Yrange = y_zoom
+	}
+
     plot(dates, offset_1, xlab = "time", ylab="chla offset",xlim=Xrange, ylim=Yrange)
     title(main=paste("Visualisation of the median of minima for the \ncomputation of the dark offset of",WMO), sub=paste("median size =",median_size))
     points(dates, offset_auto, pch="x", col="green")
