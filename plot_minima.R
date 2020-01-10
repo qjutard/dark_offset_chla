@@ -3,7 +3,7 @@
 # compare methods 1 and 3 from the ADMT20 presentation by Xing
 #############################################################################
 
-plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, plot_name, y_zoom) {
+plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, plot_name, y_zoom, greylist_axis) {
     n_prof = dim(M)[2]
     
     juld = rep(NA, n_prof)
@@ -19,7 +19,8 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
     dates = as.Date(juld, origin='1950-01-01')
     QC_colors = rep(rgb(1,1,1),n_prof)
     QC_colors[which(!is.na(percent_qc4))] = rgb(percent_qc4[which(!is.na(percent_qc4))], 1-percent_qc4[which(!is.na(percent_qc4))], rep(0,length(which(!is.na(percent_qc4)))))
-    
+    QC_colors[which(greylist_axis==3)] = rgb(0.5,0.5,0.5)
+    QC_colors[which(greylist_axis==4)] = rgb(0,0,0)
     
     png(plot_name, width = 800, height = 400)
     

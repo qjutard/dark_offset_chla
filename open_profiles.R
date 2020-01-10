@@ -9,7 +9,7 @@ require(stringr)
 require(stringi)
 require(oce)
 
-open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer) {
+open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, index_greylist) {
 	# profile_name is a full path to the file, PARAM_NAME is consistent
 	# with bgc-argo denomination
 
@@ -20,16 +20,15 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer) {
 	param_name_padded = str_pad(PARAM_NAME, 64, "right")
 	id_prof = which(parameters==param_name_padded, arr.ind=TRUE)[2]
 	if (is.na(id_prof))	{
-		return(list("PARAM"=NA, "PRES"=NA, "PARAM_QC"=NA, "JULD"=NA, "param_units"=NA, "profile_id"=NA, "SCALE_CHLA"=NA, "DARK_CHLA"=NA,"DMMC_offset"=NA))
+		return(list("PARAM"=NA, "PRES"=NA, "PARAM_QC"=NA, "JULD"=NA, "param_units"=NA, "profile_id"=NA, "SCALE_CHLA"=NA, 
+		            "DARK_CHLA"=NA,"DMMC_offset"=NA, "is_greylist"=NA))
 	}
 
 	### get the parameter
 	PARAM = ncvar_get(filenc, PARAM_NAME, start=c(1,id_prof), count=c(-1,1))
-	#PARAM = PARAM[,id_prof]
 
 	### get the pressure
 	PRES = ncvar_get(filenc, "PRES", start=c(1,id_prof), count=c(-1,1))	
-	#PRES = PRES[,id_prof]
 
 	### get the QC
 	PARAM_NAME_QC = paste(PARAM_NAME, "_QC", sep="")
@@ -75,18 +74,24 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer) {
     profile_actual = profile_actual[length(profile_actual)]
     profile_actual = str_sub(profile_actual,3,14)
     path_to_netcdf = "/DATA/ftp.ifremer.fr/ifremer/argo/dac/"
-    L = process_file(profile_actual, index_ifremer, path_to_netcdf, DEEP_EST=DEEP_EST, accept_descent=TRUE, offset_override="dmmc")
+    L = process_file(profile_actual, index_ifremer, path_to_netcdf, DEEP_EST=DEEP_EST, accept_descent=TRUE, 
+                     offset_override="dmmc", index_greylist=index_greylist)
     
+    is_greylist = NA
     if (is.list(L)) {
         DMMC_offset = L$chl_dark_offset
     } else {
         DMMC_offset = NA
+        if (L==109) {is_greylist=4}
+        if (L==110) {is_greylist=3}
+        if (L==111) {is_greylist=3}
     }
 
     ###################################################################
 
 	nc_close(filenc)
 	
-	return(list("PARAM"=PARAM, "PRES"=PRES, "PARAM_QC"=PARAM_QC, "JULD"=JULD, "param_units"=param_units, "profile_id"=profile_id, "SCALE_CHLA"=chla_scale, "DARK_CHLA"=chla_dark, "DMMC_offset"=DMMC_offset))
+	return(list("PARAM"=PARAM, "PRES"=PRES, "PARAM_QC"=PARAM_QC, "JULD"=JULD, "param_units"=param_units, "profile_id"=profile_id, 
+	            "SCALE_CHLA"=chla_scale, "DARK_CHLA"=chla_dark, "DMMC_offset"=DMMC_offset, "is_greylist"=is_greylist))
 }
 
