@@ -33,7 +33,7 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
 	}
 
     plot(dates, offset_1, xlab = "time", ylab="chla offset",xlim=Xrange, ylim=Yrange)
-    title(main=paste("Visualisation of the median of minima for the \ncomputation of the dark offset of",WMO), sub=paste("median size =",median_size))
+    title(main=paste("Visualisation of the different methods for the computation of the dark offset of",WMO), sub=paste("median size =",median_size))
     points(dates, offset_auto, pch="x", col="green")
     points(dates, offset_DMMC, pch="+", col="blue")
     points(dates, rep(Yrange[2]+(Yrange[2]-Yrange[1])*0.02, n_prof), col=QC_colors, pch=15)
