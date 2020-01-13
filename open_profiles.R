@@ -80,6 +80,7 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, ind
     is_greylist = NA
     if (is.list(L)) {
         DMMC_offset = L$chl_dark_offset
+        if (is.na(DMMC_offset)) {DMMC_offset=0}
     } else {
         DMMC_offset = NA
         if (L==109) {is_greylist=4}
