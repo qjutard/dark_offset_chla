@@ -85,5 +85,9 @@ for (WMO in ...) {
     offset_med = rep(median(all_minima[which(is.na(greylist_axis) & is_deep)], na.rm=T), n_prof)
     offset_min = all_minima
     
+    res=list("profile"=prof_names, "zone"=zones_axis, "off_auto"=offset_auto, "off_min"=offset_min, "off_med"=offset_med, 
+             "greylist"=greylist_axis, "is_deep"=is_deep, "negative_before_auto"=negative_before_auto, "negative_after_auto"=negative_after_auto)
+    
+    write.table(file="test.txt",res,row.names=FALSE,col.names=TRUE)
     
 }
