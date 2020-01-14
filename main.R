@@ -59,7 +59,7 @@ index_greylist = read.csv(path_to_index_greylist, sep = ",") # if greylist is us
 DEEP_EST = Dark_MLD_table_coriolis(WMO, "/DATA/ftp.ifremer.fr/ifremer/argo/dac/", index_ifremer)
 
 numCores = detectCores()
-M = mcmapply(open_profiles, name_list, MoreArgs=list("CHLA", DEEP_EST, index_ifremer, index_greylist), mc.cores=numCores, USE.NAMES=FALSE)
+M = mcmapply(open_profiles, name_list, MoreArgs=list("CHLA", DEEP_EST, index_ifremer, index_greylist, WMO, use_DMMC=TRUE), mc.cores=numCores, USE.NAMES=FALSE)
 
 ### compute minima
 
@@ -79,15 +79,23 @@ all_minima = rep(NA, n_prof)
 offset_auto = rep(NA, n_prof)
 offset_DMMC = rep(NA, n_prof)
 greylist_axis = rep(NA, n_prof)
+is_deep = rep(NA, n_prof)
 for (i in seq(1, n_prof)) {
     chla = M[,i]$PARAM
     chla_QC = M[,i]$PARAM_QC
+    pres = M[,i]$param_QC
     chla[which((chla > 50) | (chla < - 0.1))] = NA
     chla[which(chla_QC=="4")] = NA
     chla = chla[which(!is.na(chla))]
+    pres = pres[which(!is.na(chla))]
     
     chla_smoothed = runmed(chla, median_size, endrule="constant")
     all_minima[i] = min(chla_smoothed, na.rm = T)
+    if (max(pres, na.rm=T)>800) {
+        is_deep[i] = TRUE
+    } else { 
+        is_deep[i] = FALSE
+    }
     
     offset_auto[i] = (M[,i]$DARK_CHLA - factory_dark) * M[,i]$SCALE_CHLA
     
@@ -97,8 +105,8 @@ for (i in seq(1, n_prof)) {
 }
 all_minima[which(is.infinite(all_minima))] = NA
 
+offset_3 = rep(median(all_minima[which(is.na(greylist_axis)) | which(!is_deep)], na.rm=T), n_prof)
 offset_1 = all_minima
-offset_3 = rep(median(all_minima[which(is.na(greylist_axis))], na.rm=T), n_prof)
 
 ### plot
 

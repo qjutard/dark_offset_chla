@@ -9,7 +9,7 @@ require(stringr)
 require(stringi)
 require(oce)
 
-open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, index_greylist) {
+open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, index_greylist, WMO, use_DMMC=FALSE) {
 	# profile_name is a full path to the file, PARAM_NAME is consistent
 	# with bgc-argo denomination
 
@@ -18,10 +18,16 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, ind
 	### find the profile index	
     parameters = ncvar_get(filenc,"STATION_PARAMETERS")
 	param_name_padded = str_pad(PARAM_NAME, 64, "right")
-	id_prof = which(parameters==param_name_padded, arr.ind=TRUE)[2]
+	id_prof_arr = which(parameters==param_name_padded, arr.ind=TRUE)
+	if (is.null(dim(id_prof_arr))) { #if id_prof_arr is a vector, there is only one PARAM_NAME profile
+	    id_prof = id_prof_arr[2]
+	} else {
+	    id_prof = id_prof_arr[1,2] #take the first profile
+	    print(paste("Several profiles of", PARAM_NAME,"detected, only using the first one"))
+	}
 	if (is.na(id_prof))	{
 		return(list("PARAM"=NA, "PRES"=NA, "PARAM_QC"=NA, "JULD"=NA, "param_units"=NA, "profile_id"=NA, "SCALE_CHLA"=NA, 
-		            "DARK_CHLA"=NA,"DMMC_offset"=NA, "is_greylist"=NA))
+		            "DARK_CHLA"=NA,"DMMC_offset"=NA, "is_greylist"=NA, "lat"=NA, "lon"=NA))
 	}
 
 	### get the parameter
@@ -54,6 +60,17 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, ind
 	
 	##### outputs specific to the project on the chla dark offset #####
 	
+	lat<- ncvar_get(filenc,"LATITUDE")[1]
+	lon<- ncvar_get(filenc,"LONGITUDE")[1]
+	
+	position_qc<-substr(ncvar_get(filenc,"POSITION_QC"),1,1) # read position QC
+	
+	# skip the profile if the position QC is bad
+	if (position_qc == 3 | position_qc==4) {
+	    lat = NA
+        lon = NA
+	}
+	
 	### get the calib parameters
 	
 	# get the chla_scale
@@ -69,30 +86,62 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, ind
     chla_calib_dark = unlist(strsplit(chla_calib_dark,"=")) # separate the name from the number
     chla_dark = as.numeric(chla_calib_dark[2]) # get the dark coefficient as a number
     
-    ### get the DMMC dark offset
-    profile_actual = unlist(strsplit(profile_name,'/'))
-    profile_actual = profile_actual[length(profile_actual)]
-    profile_actual = str_sub(profile_actual,3,14)
-    path_to_netcdf = "/DATA/ftp.ifremer.fr/ifremer/argo/dac/"
-    L = process_file(profile_actual, index_ifremer, path_to_netcdf, DEEP_EST=DEEP_EST, accept_descent=TRUE, 
-                     offset_override="dmmc", index_greylist=index_greylist)
-    
+    ### get the DMMC dark offset and greylis
+    DMMC_offset = NA
     is_greylist = NA
-    if (is.list(L)) {
-        DMMC_offset = L$chl_dark_offset
-        if (is.na(DMMC_offset)) {DMMC_offset=0}
+    if (use_DMMC) {
+        profile_actual = unlist(strsplit(profile_name,'/'))
+        profile_actual = profile_actual[length(profile_actual)]
+        profile_actual = str_sub(profile_actual,3,14)
+        path_to_netcdf = "/DATA/ftp.ifremer.fr/ifremer/argo/dac/"
+        L = process_file(profile_actual, index_ifremer, path_to_netcdf, DEEP_EST=DEEP_EST, accept_descent=TRUE, 
+                         offset_override="dmmc", index_greylist=index_greylist)
+        if (is.list(L)) {
+            DMMC_offset = L$chl_dark_offset
+            if (is.na(DMMC_offset)) {DMMC_offset=0}
+        } else {
+            if (L==109) {is_greylist=4}
+            if (L==110) {is_greylist=3}
+            if (L==111) {is_greylist=3}
+        }
     } else {
-        DMMC_offset = NA
-        if (L==109) {is_greylist=4}
-        if (L==110) {is_greylist=3}
-        if (L==111) {is_greylist=3}
+        if (!is.null(index_greylist) & !is.na(JULD)) {
+            
+            indices_greylist = which( index_greylist$PLATFORM_CODE==WMO & (index_greylist$PARAMETER_NAME=="CHLA" | index_greylist$PARAMETER_NAME=="BBP700") )
+            
+            prof_date_trunc = stri_datetime_format(as.Date(JULD, origin='1950-01-01'), format="uuuuMMdd")
+            
+            for (j in indices_greylist) {
+                
+                ## is the profile on the greylist ?
+                prof_in_greylist = FALSE
+                if (is.na(index_greylist$END_DATE[j])) { # all past that date
+                    if (prof_date_trunc>=index_greylist$START_DATE[j]) {
+                        prof_in_greylist = TRUE
+                    } 
+                } else { # date interval
+                    if (index_greylist$START_DATE[j]<=prof_date_trunc & prof_date_trunc<=index_greylist$END_DATE[j]) {
+                        prof_in_greylist = TRUE
+                    }
+                }
+                
+                ## what is the QC and what to do ?
+                if (prof_in_greylist){
+                    if (index_greylist$QUALITY_CODE[j] == 4) {
+                        print(paste("profile on the greylist with QC 4 at index ", j, " with comment : ", index_greylist$COMMENT[j], sep=""))
+                        is_greylist = 4
+                    } else if (index_greylist$QUALITY_CODE[j] == 3) {
+                        is_greylist = 3
+                    }
+                }     
+            }
+        }
     }
-
     ###################################################################
 
 	nc_close(filenc)
 	
 	return(list("PARAM"=PARAM, "PRES"=PRES, "PARAM_QC"=PARAM_QC, "JULD"=JULD, "param_units"=param_units, "profile_id"=profile_id, 
-	            "SCALE_CHLA"=chla_scale, "DARK_CHLA"=chla_dark, "DMMC_offset"=DMMC_offset, "is_greylist"=is_greylist))
+	            "SCALE_CHLA"=chla_scale, "DARK_CHLA"=chla_dark, "DMMC_offset"=DMMC_offset, "is_greylist"=is_greylist, "lat"=lat, "lon"=lon))
 }
 
