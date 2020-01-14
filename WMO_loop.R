@@ -18,16 +18,16 @@ source(paste(path_to_source, "plot_minima.R", sep=""))
 source(paste(path_to_source, "zones.R", sep=""))
 
 median_size = 5
-numCores = detectCores()
+num_cores = detectCores()
 
 index_ifremer = read.table(path_to_index_ifremer, skip=9, sep = ",")
 index_greylist = read.csv(path_to_index_greylist, sep = ",") # if greylist is useful at some point
 
-for (WMO in ...) {
+treat_WMO <- function(WMO) {
     name_list = file_names(index_ifremer, path_to_netcdf_before_WMO, WMO, path_to_netcdf_after_WMO)
     name_meta = paste(path_to_netcdf_before_WMO, WMO, "/", WMO, "_meta.nc", sep="")
     
-    M = mcmapply(open_profiles, name_list, MoreArgs=list("CHLA", DEEP_EST=NULL, index_ifremer, index_greylist, WMO, use_DMMC=FALSE), mc.cores=numCores, USE.NAMES=FALSE)
+    M = mapply(open_profiles, name_list, MoreArgs=list("CHLA", DEEP_EST=NULL, index_ifremer, index_greylist, WMO, use_DMMC=FALSE), USE.NAMES=FALSE)
     
     metanc = nc_open(name_meta)
     calib = ncvar_get(metanc, "PREDEPLOYMENT_CALIB_COEFFICIENT")
@@ -74,7 +74,9 @@ for (WMO in ...) {
         
         lat = M[,i]$lat
         lon = M[,i]$lon
-        zones_axis[i] = zones(lat, lon)
+        if(!is.na(lat) & !is.na(lon)) {
+            zones_axis[i] = zones(lat, lon)
+        }
         
         splitted_name = unlist(strsplit(name_list[i],"/"))
         prof_names[i] = splitted_name[length(splitted_name)]
@@ -88,6 +90,13 @@ for (WMO in ...) {
     res=list("profile"=prof_names, "zone"=zones_axis, "off_auto"=offset_auto, "off_min"=offset_min, "off_med"=offset_med, 
              "greylist"=greylist_axis, "is_deep"=is_deep, "negative_before_auto"=negative_before_auto, "negative_after_auto"=negative_after_auto)
     
-    write.table(file="test.txt",res,row.names=FALSE,col.names=TRUE)
+    output_name = paste(WMO, "_offsets.txt", sep="")
     
+    write.table(file=output_name, res, row.names=FALSE, col.names=TRUE)
+    
+    return(0)
 }
+
+list_WMO=c("6901524","6901527","6901439","6902738")
+
+M = mcmapply(treat_WMO, list_WMO, mc.cores=num_cores)

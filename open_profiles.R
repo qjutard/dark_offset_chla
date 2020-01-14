@@ -12,23 +12,24 @@ require(oce)
 open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, index_greylist, WMO, use_DMMC=FALSE) {
 	# profile_name is a full path to the file, PARAM_NAME is consistent
 	# with bgc-argo denomination
-
+    print(profile_name)
     filenc = nc_open(profile_name, readunlim=FALSE, write=FALSE)
 	
 	### find the profile index	
     parameters = ncvar_get(filenc,"STATION_PARAMETERS")
 	param_name_padded = str_pad(PARAM_NAME, 64, "right")
 	id_prof_arr = which(parameters==param_name_padded, arr.ind=TRUE)
-	if (is.null(dim(id_prof_arr))) { #if id_prof_arr is a vector, there is only one PARAM_NAME profile
+	if (length(id_prof_arr)==0) {
+	    return(list("PARAM"=NA, "PRES"=NA, "PARAM_QC"=NA, "JULD"=NA, "param_units"=NA, "profile_id"=NA, "SCALE_CHLA"=NA, 
+	                "DARK_CHLA"=NA,"DMMC_offset"=NA, "is_greylist"=NA, "lat"=NA, "lon"=NA))
+	}
+	if (length(id_prof_arr)==2) { #if id_prof_arr is a vector, there is only one PARAM_NAME profile
 	    id_prof = id_prof_arr[2]
 	} else {
 	    id_prof = id_prof_arr[1,2] #take the first profile
 	    print(paste("Several profiles of", PARAM_NAME,"detected, only using the first one"))
 	}
-	if (is.na(id_prof))	{
-		return(list("PARAM"=NA, "PRES"=NA, "PARAM_QC"=NA, "JULD"=NA, "param_units"=NA, "profile_id"=NA, "SCALE_CHLA"=NA, 
-		            "DARK_CHLA"=NA,"DMMC_offset"=NA, "is_greylist"=NA, "lat"=NA, "lon"=NA))
-	}
+	
 
 	### get the parameter
 	PARAM = ncvar_get(filenc, PARAM_NAME, start=c(1,id_prof), count=c(-1,1))
