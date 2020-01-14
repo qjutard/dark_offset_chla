@@ -83,7 +83,7 @@ is_deep = rep(NA, n_prof)
 for (i in seq(1, n_prof)) {
     chla = M[,i]$PARAM
     chla_QC = M[,i]$PARAM_QC
-    pres = M[,i]$param_QC
+    pres = M[,i]$PRES
     chla[which((chla > 50) | (chla < - 0.1))] = NA
     chla[which(chla_QC=="4")] = NA
     chla = chla[which(!is.na(chla))]
@@ -105,7 +105,7 @@ for (i in seq(1, n_prof)) {
 }
 all_minima[which(is.infinite(all_minima))] = NA
 
-offset_3 = rep(median(all_minima[which(is.na(greylist_axis)) | which(!is_deep)], na.rm=T), n_prof)
+offset_3 = rep(median(all_minima[which(is.na(greylist_axis) & is_deep)], na.rm=T), n_prof)
 offset_1 = all_minima
 
 ### plot

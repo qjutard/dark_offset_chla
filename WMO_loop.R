@@ -15,6 +15,7 @@ source("~/Documents/dark_chla/dark_offset_chla/pathways.R")
 source(paste(path_to_source, "file_names.R", sep=""))
 source(paste(path_to_source, "open_profiles.R", sep=""))
 source(paste(path_to_source, "plot_minima.R", sep=""))
+source(paste(path_to_source, "zones.R", sep=""))
 
 median_size = 5
 numCores = detectCores()
@@ -26,7 +27,7 @@ for (WMO in ...) {
     name_list = file_names(index_ifremer, path_to_netcdf_before_WMO, WMO, path_to_netcdf_after_WMO)
     name_meta = paste(path_to_netcdf_before_WMO, WMO, "/", WMO, "_meta.nc", sep="")
     
-    M = mcmapply(open_profiles, name_list, MoreArgs=list("CHLA", DEEP_EST=NULL, index_ifremer, index_greylist, WMO, use_DMMC=TRUE), mc.cores=numCores, USE.NAMES=FALSE)
+    M = mcmapply(open_profiles, name_list, MoreArgs=list("CHLA", DEEP_EST=NULL, index_ifremer, index_greylist, WMO, use_DMMC=FALSE), mc.cores=numCores, USE.NAMES=FALSE)
     
     metanc = nc_open(name_meta)
     calib = ncvar_get(metanc, "PREDEPLOYMENT_CALIB_COEFFICIENT")
@@ -42,11 +43,15 @@ for (WMO in ...) {
     all_minima = rep(NA, n_prof)
     offset_auto = rep(NA, n_prof)
     greylist_axis = rep(NA, n_prof)
+    zones_axis = rep(NA, n_prof)
     is_deep = rep(NA, n_prof)
+    prof_names = rep(NA, n_prof)
+    negative_before_auto = rep(NA, n_prof)
+    negative_after_auto = rep(NA, n_prof)
     for (i in seq(1, n_prof)) {
         chla = M[,i]$PARAM
         chla_QC = M[,i]$PARAM_QC
-        pres = M[,i]$param_QC
+        pres = M[,i]$PRES
         chla[which((chla > 50) | (chla < - 0.1))] = NA
         chla[which(chla_QC=="4")] = NA
         chla = chla[which(!is.na(chla))]
@@ -62,11 +67,22 @@ for (WMO in ...) {
         
         offset_auto[i] = (M[,i]$DARK_CHLA - factory_dark) * M[,i]$SCALE_CHLA
         
+        negative_before_auto[i] = length(which(chla<0))
+        negative_after_auto[i] = length(which(chla<offset_auto[i]))
+        
         greylist_axis[i] = M[,i]$is_greylist
+        
+        lat = M[,i]$lat
+        lon = M[,i]$lon
+        zones_axis[i] = zones(lat, lon)
+        
+        splitted_name = unlist(strsplit(name_list[i],"/"))
+        prof_names[i] = splitted_name[length(splitted_name)]
+        
     }
     all_minima[which(is.infinite(all_minima))] = NA
     
-    offset_med = rep(median(all_minima[which(is.na(greylist_axis)) | which(!is_deep)], na.rm=T), n_prof)
+    offset_med = rep(median(all_minima[which(is.na(greylist_axis) & is_deep)], na.rm=T), n_prof)
     offset_min = all_minima
     
     
