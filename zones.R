@@ -6,6 +6,8 @@
 
 zones <- function(lat, lon) {
     
+    lon = ((lon+180)%%360)-180 #get lon in -180;180 format
+    
     L=NULL
     
     L[[1]]=list("zone"="SO  ", "lat_min"=-Inf, "lat_max"=-37, "lon_min"=-Inf, "lon_max"=+Inf) #southern ocean
@@ -19,7 +21,7 @@ zones <- function(lat, lon) {
     L[[9]]=list("zone"="BALT", "lat_min"=53, "lat_max"=66, "lon_min"=10, "lon_max"=45) #baltic sea
     L[[10]]=list("zone"="MED ", "lat_min"=29, "lat_max"=53, "lon_min"=-4, "lon_max"=45) #mediterranean sea
     ### zones that overwrite others, must be at the end
-    L[[11]]=list("zone"="BLAC", "lat_min"=40, "lat_max"=53, "lon_min"=47, "lon_max"=45) #black sea
+    L[[11]]=list("zone"="BLAC", "lat_min"=40, "lat_max"=53, "lon_min"=27, "lon_max"=45) #black sea
     L[[12]]=list("zone"="LABR", "lat_min"=53, "lat_max"=80, "lon_min"=-90, "lon_max"=-45) #labrador sea
      
     zone_ret = NA
@@ -30,7 +32,7 @@ zones <- function(lat, lon) {
         if (test$lon_min < test$lon_max) { #typical case
             lon_ok = (test$lon_min <= lon & lon < test$lon_max)
         } else { #zones going over 180 longitude degrees
-            lon_ok = (test$lon_max <= lon | lon < test$lon_min)
+            lon_ok = (test$lon_min <= lon | lon < test$lon_max)
         }
         
         if (lat_ok & lon_ok) {

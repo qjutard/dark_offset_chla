@@ -97,6 +97,7 @@ treat_WMO <- function(WMO) {
     return(0)
 }
 
-list_WMO=c("6901524","6901527","6901439","6902738")
+#list_WMO = c("6901524","6901527","6901439","6902738")
+list_WMO = read.table("WMO_CHLA.list")$V1
 
 M = mcmapply(treat_WMO, list_WMO, mc.cores=num_cores)

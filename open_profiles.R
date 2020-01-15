@@ -77,17 +77,21 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, ind
 	# get the chla_scale
 	calib = ncvar_get(filenc, "SCIENTIFIC_CALIB_COEFFICIENT")
     id_chla = grep("CHLA", calib) # find chla index
-    chla_calib = calib[id_chla] # get chla calibration
-    chla_calib = unlist(strsplit(chla_calib,",")) # separate coefficients
-    chla_calib_scale = chla_calib[grep("SCALE_CHLA",chla_calib)] # get the scale information
-    chla_calib_scale = unlist(strsplit(chla_calib_scale,"=")) # separate the name from the number
-    chla_scale = as.numeric(chla_calib_scale[2]) # get the scale coefficient as a number
-    # get the chla dark
-    chla_calib_dark = chla_calib[grep("DARK_CHLA",chla_calib)] # get the dark information
-    chla_calib_dark = unlist(strsplit(chla_calib_dark,"=")) # separate the name from the number
-    chla_dark = as.numeric(chla_calib_dark[2]) # get the dark coefficient as a number
+    chla_scale = NA
+    chla_dark = NA
+    if (length(id_chla)>0) {
+        chla_calib = calib[id_chla] # get chla calibration
+        chla_calib = unlist(strsplit(chla_calib,",")) # separate coefficients
+        chla_calib_scale = chla_calib[grep("SCALE_CHLA",chla_calib)] # get the scale information
+        chla_calib_scale = unlist(strsplit(chla_calib_scale,"=")) # separate the name from the number
+        chla_scale = as.numeric(chla_calib_scale[2]) # get the scale coefficient as a number
+        # get the chla dark
+        chla_calib_dark = chla_calib[grep("DARK_CHLA",chla_calib)] # get the dark information
+        chla_calib_dark = unlist(strsplit(chla_calib_dark,"=")) # separate the name from the number
+        chla_dark = as.numeric(chla_calib_dark[2]) # get the dark coefficient as a number
+    }
     
-    ### get the DMMC dark offset and greylis
+    ### get the DMMC dark offset and greylist
     DMMC_offset = NA
     is_greylist = NA
     if (use_DMMC) {
