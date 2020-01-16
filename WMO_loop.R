@@ -48,6 +48,8 @@ treat_WMO <- function(WMO) {
     prof_names = rep(NA, n_prof)
     negative_before_auto = rep(NA, n_prof)
     negative_after_auto = rep(NA, n_prof)
+    lat_axis = rep(NA, n_prof)
+    lon_axis = rep(NA, n_prof)
     for (i in seq(1, n_prof)) {
         chla = M[,i]$PARAM
         chla_QC = M[,i]$PARAM_QC
@@ -74,6 +76,8 @@ treat_WMO <- function(WMO) {
         
         lat = M[,i]$lat
         lon = M[,i]$lon
+        lat_axis[i] = lat
+        lon_axis[i] = lon
         if(!is.na(lat) & !is.na(lon)) {
             zones_axis[i] = zones(lat, lon)
         }
@@ -88,7 +92,8 @@ treat_WMO <- function(WMO) {
     offset_min = all_minima
     
     res=list("profile"=prof_names, "zone"=zones_axis, "off_auto"=offset_auto, "off_min"=offset_min, "off_med"=offset_med, 
-             "greylist"=greylist_axis, "is_deep"=is_deep, "negative_before_auto"=negative_before_auto, "negative_after_auto"=negative_after_auto)
+             "greylist"=greylist_axis, "is_deep"=is_deep, "negative_before_auto"=negative_before_auto, "negative_after_auto"=negative_after_auto,
+             "lat"=lat_axis, "lon"=lon_axis)
     
     output_name = paste(WMO, "_offsets.txt", sep="")
     
@@ -99,5 +104,7 @@ treat_WMO <- function(WMO) {
 
 #list_WMO = c("6901524","6901527","6901439","6902738")
 list_WMO = read.table("WMO_CHLA.list")$V1
+list_WMO = read.table("incois_WMO_CHLA.list")$V1
+list_WMO = read.table("bodc_WMO_CHLA.list")$V1
 
 M = mcmapply(treat_WMO, list_WMO, mc.cores=num_cores)
