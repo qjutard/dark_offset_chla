@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() { 
-	echo "Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-y <y_zoom>] [-h]
+	echo "Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-y <y_zoom>] [-hM]
 Do '$0 -h' for help" 1>&2
 	exit 1 
 }
@@ -10,9 +10,9 @@ helprint() {
 #########################################################################################
 
 DARK makes analytics plots to compare methods for the computation of the dark offset
-of chla in BGV-ARGO
+of chla in BGC-ARGO
 
-Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-y <y_zoom>] [-h]
+Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-y <y_zoom>] [-hM]
 
 ### Options
 
@@ -25,6 +25,7 @@ Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-y <y_zoom>] [-h]
 [-y <y_zoom>] : Specify bounds for the y-axis with the format 'MIN.min;MAX.max' with the
                 single quotation marks.
 [-h] : help
+[-M] : Include offsets computed by DMMC, warning : long.
 
 #########################################################################################
 " 1>&2
@@ -35,8 +36,9 @@ WMO=NA
 plot_name=NA
 median_size=NA
 y_zoom=NA
+use_DMMC=FALSE
 
-while getopts W:n:m:y:h option
+while getopts W:n:m:y:Mh option
 do
 case "${option}"
 in
@@ -44,10 +46,11 @@ W) WMO=${OPTARG};;
 n) plot_name=${OPTARG};;
 m) median_size=${OPTARG};;
 y) y_zoom=${OPTARG};;
+M) use_DMMC=TRUE;;
 h) helprint;;
 *) usage;;
 esac
 done
 
 
-Rscript ~/Documents/dark_chla/dark_offset_chla/main.R $WMO $plot_name $median_size $y_zoom
+Rscript ~/Documents/dark_chla/dark_offset_chla/main.R $WMO $plot_name $median_size $y_zoom $use_DMMC

@@ -27,6 +27,7 @@ WMO = uf[1]
 plot_name = uf[2]
 median_size = uf[3]
 y_zoom_call = uf[4]
+use_DMMC = as.logical(uf[5])
 
 # apply default values if necessary
 
@@ -56,10 +57,13 @@ name_meta = paste(path_to_netcdf_before_WMO, WMO, "/", WMO, "_meta.nc", sep="")
 ### Get a list with information on all profiles
 index_greylist = read.csv(path_to_index_greylist, sep = ",") # if greylist is useful at some point
 
-DEEP_EST = Dark_MLD_table_coriolis(WMO, "/DATA/ftp.ifremer.fr/ifremer/argo/dac/", index_ifremer)
+DEEP_EST= NULL
+if (use_DMMC) {
+    DEEP_EST = Dark_MLD_table_coriolis(WMO, "/DATA/ftp.ifremer.fr/ifremer/argo/dac/", index_ifremer)
+}
 
 numCores = detectCores()
-M = mcmapply(open_profiles, name_list, MoreArgs=list("CHLA", DEEP_EST, index_ifremer, index_greylist, WMO, use_DMMC=TRUE), mc.cores=numCores, USE.NAMES=FALSE)
+M = mcmapply(open_profiles, name_list, MoreArgs=list("CHLA", DEEP_EST, index_ifremer, index_greylist, WMO, use_DMMC=use_DMMC), mc.cores=numCores, USE.NAMES=FALSE)
 
 ### compute minima
 

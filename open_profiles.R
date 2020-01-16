@@ -12,7 +12,7 @@ require(oce)
 open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, index_greylist, WMO, use_DMMC=FALSE) {
 	# profile_name is a full path to the file, PARAM_NAME is consistent
 	# with bgc-argo denomination
-    print(profile_name)
+    #print(profile_name)
     filenc = nc_open(profile_name, readunlim=FALSE, write=FALSE)
 	
 	### find the profile index	
