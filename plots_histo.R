@@ -12,7 +12,7 @@ list_WMO_bodc = read.table("bodc_WMO_CHLA.list")$V1
 list_WMO = c(list_WMO, list_WMO_incois, list_WMO_bodc)
 
 WMO = list_WMO[1]
-# file_offsets = paste(WMO, "_offsets.txt", sep="")
+file_offsets = paste(WMO, "_offsets.txt", sep="")
 table_offsets = read.table(file_offsets, header = TRUE)
 
 ALL_profiles = table_offsets 
@@ -33,10 +33,11 @@ for (i in 2:length(list_WMO)) {
 zone = "IND "
 
 sample = which(is.na(ALL_profiles$greylist) & 
-                   ALL_profiles$is_deep & 
+                    #ALL_profiles$is_deep & 
                    !(str_sub(ALL_profiles$profile, 3, 9)=="3901066") & 
                    !(str_sub(ALL_profiles$profile, 3, 9)=="3901067") &
                    !is.na(ALL_profiles$off_auto) &
+                   !is.na(ALL_profiles$off_med) &
                    !(ALL_profiles$zone=="BLAC")
                )
 
@@ -54,11 +55,13 @@ hist(ALL_profiles$off_med[sample], plot=T, breaks = 50, col="slateblue1")
 mirrored_hist(ALL_profiles$off_auto[sample], ALL_profiles$off_min[sample], 50)
 mirrored_hist(ALL_profiles$off_auto[sample], ALL_profiles$off_med[sample], 50)
 
+
 all_zones = c("ATLN", "ATLS", "IND ", "SO ", "LABR", "MED ", "BLAC", "ARCT", "BALT", "IRMI", "PACN", "PACS")
 
 for (zone in all_zones) {
     plot_zone(ALL_profiles, zone)
 }
+
 
 # tests on negative auto_to_med
 
@@ -99,8 +102,8 @@ mirrored_hist <- function(x1, x2, br) {
     hist1 = hist(x1, plot=F, breaks = br)
     hist2 = hist(x2, plot=F, breaks = br)
     
-    Xrange = range(c(x1, x2))
-    Yrange = range(c(hist1$counts, hist2$counts))
+    Xrange = range(c(x1, x2), na.rm=T)
+    Yrange = range(c(hist1$counts, hist2$counts), na.rm=T)
     
     #Make the plot
     par(mar=c(0,5,3,3))
@@ -112,7 +115,7 @@ mirrored_hist <- function(x1, x2, br) {
 
 plot_zone <- function(ALL_profiles, zone) {
     sample = which(is.na(ALL_profiles$greylist) & 
-                       ALL_profiles$is_deep & 
+                       #ALL_profiles$is_deep & 
                        !(str_sub(ALL_profiles$profile, 3, 9)=="3901066") & 
                        !(str_sub(ALL_profiles$profile, 3, 9)=="3901067") &
                        !is.na(ALL_profiles$off_auto) &
@@ -129,12 +132,12 @@ plot_zone <- function(ALL_profiles, zone) {
     hist1 = hist(x1, plot=F, breaks = br)
     hist2 = hist(x2, plot=F, breaks = br)
     
-    Xrange = range(c(x1, x2))
+    Xrange = range(c(x1, x2), na.rm=T)
     Yrange = range(c(hist1$counts, hist2$counts))
     
     plot_name = paste("histograms_",zone,".png", sep="")
     
-    png(plot_name, width = 600, height = 600)
+    png(plot_name, width = 400, height = 400)
     
     par(mfrow=c(3,1))
     
