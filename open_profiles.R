@@ -93,7 +93,6 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, ind
     
     ### get the DMMC dark offset and greylist
     DMMC_offset = NA
-    is_greylist = NA
     if (use_DMMC) {
         profile_actual = unlist(strsplit(profile_name,'/'))
         profile_actual = profile_actual[length(profile_actual)]
@@ -104,42 +103,38 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, ind
         if (is.list(L)) {
             DMMC_offset = L$chl_dark_offset
             if (is.na(DMMC_offset)) {DMMC_offset=0}
-        } else {
-            if (L==109) {is_greylist=4}
-            if (L==110) {is_greylist=3}
-            if (L==111) {is_greylist=3}
-        }
-    } else {
-        if (!is.null(index_greylist) & !is.na(JULD)) {
+        } 
+    }
+    is_greylist = NA
+    if (!is.null(index_greylist) & !is.na(JULD)) {
+        
+        indices_greylist = which( index_greylist$PLATFORM_CODE==WMO & (index_greylist$PARAMETER_NAME=="CHLA" | index_greylist$PARAMETER_NAME=="BBP700") )
+        
+        prof_date_trunc = stri_datetime_format(as.Date(JULD, origin='1950-01-01'), format="uuuuMMdd")
+        
+        for (j in indices_greylist) {
             
-            indices_greylist = which( index_greylist$PLATFORM_CODE==WMO & (index_greylist$PARAMETER_NAME=="CHLA" | index_greylist$PARAMETER_NAME=="BBP700") )
-            
-            prof_date_trunc = stri_datetime_format(as.Date(JULD, origin='1950-01-01'), format="uuuuMMdd")
-            
-            for (j in indices_greylist) {
-                
-                ## is the profile on the greylist ?
-                prof_in_greylist = FALSE
-                if (is.na(index_greylist$END_DATE[j])) { # all past that date
-                    if (prof_date_trunc>=index_greylist$START_DATE[j]) {
-                        prof_in_greylist = TRUE
-                    } 
-                } else { # date interval
-                    if (index_greylist$START_DATE[j]<=prof_date_trunc & prof_date_trunc<=index_greylist$END_DATE[j]) {
-                        prof_in_greylist = TRUE
-                    }
+            ## is the profile on the greylist ?
+            prof_in_greylist = FALSE
+            if (is.na(index_greylist$END_DATE[j])) { # all past that date
+                if (prof_date_trunc>=index_greylist$START_DATE[j]) {
+                    prof_in_greylist = TRUE
+                } 
+            } else { # date interval
+                if (index_greylist$START_DATE[j]<=prof_date_trunc & prof_date_trunc<=index_greylist$END_DATE[j]) {
+                    prof_in_greylist = TRUE
                 }
-                
-                ## what is the QC and what to do ?
-                if (prof_in_greylist){
-                    if (index_greylist$QUALITY_CODE[j] == 4) {
-                        print(paste("profile on the greylist with QC 4 at index ", j, " with comment : ", index_greylist$COMMENT[j], sep=""))
-                        is_greylist = 4
-                    } else if (index_greylist$QUALITY_CODE[j] == 3) {
-                        is_greylist = 3
-                    }
-                }     
             }
+            
+            ## what is the QC and what to do ?
+            if (prof_in_greylist){
+                if (index_greylist$QUALITY_CODE[j] == 4) {
+                    print(paste("profile on the greylist with QC 4 at index ", j, " with comment : ", index_greylist$COMMENT[j], sep=""))
+                    is_greylist = 4
+                } else if (index_greylist$QUALITY_CODE[j] == 3) {
+                    is_greylist = 3
+                }
+            }     
         }
     }
     ###################################################################
