@@ -11,6 +11,7 @@ library(MASS)
 library(stringr)
 library(parallel)
 library(stringi)
+library(wesanderson)
 
 source("~/Documents/dark_chla/dark_offset_chla/pathways.R")
 source(paste(path_to_source, "file_names.R", sep=""))

@@ -2,6 +2,7 @@
 # Defines a function that plots minima of profiles from a float to
 # compare methods 1 and 3 from the ADMT20 presentation by Xing
 #############################################################################
+require(wesanderson)
 
 plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, plot_name, y_zoom, greylist_axis) {
     n_prof = dim(M)[2]
@@ -30,15 +31,23 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
     	Yrange[2] = Yrange[2]+(Yrange[2]-Yrange[1])*0.4
     } else {
 		Yrange = y_zoom
-	}
-
-    plot(dates, offset_1, xlab = "time", ylab="chla offset",xlim=Xrange, ylim=Yrange)
-    title(main=paste("Visualisation of the different methods for the computation of the dark offset of",WMO), sub=paste("median size =",median_size))
-    points(dates, offset_auto, pch="x", col="green")
-    points(dates, offset_DMMC, pch="+", col="blue")
+    }
+    
+    my_colors = wes_palette("Darjeeling1", 3)
+    col_min = my_colors[3]
+    col_med = "#000000"
+    col_auto = my_colors[2]
+    col_DMMC = my_colors[1]
+    
+    plot(dates, offset_1, xlab = "time", ylab="chla offset",xlim=Xrange, ylim=Yrange, col=col_min)
+    title(main=paste("Visualisation of the different methods for the computation of the dark offset of",WMO), 
+          sub=paste("median size =",median_size))
+    points(dates, offset_auto, pch="x", col=col_auto)
+    points(dates, offset_DMMC, pch="+", col=col_DMMC)
     points(dates, rep(Yrange[2]+(Yrange[2]-Yrange[1])*0.02, n_prof), col=QC_colors, pch=15)
-    lines(dates, offset_3, col="red")
-    legend(x=Xrange[2]*0.8+Xrange[1]*0.2, y=Yrange[2], legend=c("profile minium","median of minima","automatic offset","DMMC offset"), pch=c('o','_','x','+'), col=c('black','red','green','blue'))
+    lines(dates, offset_3, col=col_med)
+    legend(x=Xrange[2]*0.8+Xrange[1]*0.2, y=Yrange[2], legend=c("profile minimum","median of minima","automatic offset","DMMC offset"), 
+           pch=c('o','_','x','+'), col=c(col_min, col_med, col_auto, col_DMMC))
     
     dev.off()
     
