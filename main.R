@@ -85,6 +85,8 @@ offset_auto = rep(NA, n_prof)
 offset_DMMC = rep(NA, n_prof)
 greylist_axis = rep(NA, n_prof)
 is_deep = rep(NA, n_prof)
+all_minima_var = rep(NA, n_prof)
+min_pres = rep(NA, n_prof)
 for (i in seq(1, n_prof)) {
     chla = M[,i]$PARAM
     chla_QC = M[,i]$PARAM_QC
@@ -96,11 +98,10 @@ for (i in seq(1, n_prof)) {
     
     chla_smoothed = runmed(chla, median_size, endrule="constant")
     all_minima[i] = min(chla_smoothed, na.rm = T)
-    if (max(pres, na.rm=T)>800) {
-        is_deep[i] = TRUE
-    } else { 
-        is_deep[i] = FALSE
-    }
+    min_pres[i] = min(pres[which(chla_smoothed==all_minima[i])], na.rm=T)
+    all_minima_var[i] = var(chla_smoothed[which(pres>=min_pres[i])], na.rm = T)
+    
+    is_deep[i] = (max(pres, na.rm=T)>800)
     
     offset_auto[i] = (M[,i]$DARK_CHLA - factory_dark) * M[,i]$SCALE_CHLA
     
@@ -110,11 +111,54 @@ for (i in seq(1, n_prof)) {
 }
 all_minima[which(is.infinite(all_minima))] = NA
 
-offset_3 = rep(median(all_minima[which(is.na(greylist_axis) & is_deep)], na.rm=T), n_prof)
+median_axis = which(is.na(greylist_axis) & is_deep & !is.na(all_minima))
+
+offset_3 = rep(median(all_minima[median_axis], na.rm=T), n_prof)
 offset_1 = all_minima
+
+### Kalman filter on min for DM
+
+kal_off = rep(NA, n_prof)
+kal_var = rep(NA, n_prof)
+
+# initialize
+kal_off[1:median_axis[1]] = unique(offset_3) # keep median for the first values
+#kal_off[median_axis[1]] = unique(offset_3) # is NA if no valid profile on median_axis
+kal_var[median_axis[1]] = sd(all_minima[median_axis])*10
+
+for (i in 2:length(median_axis)) {
+    
+    # observation variance
+    r = 0.01 + all_minima_var[median_axis[i]]
+    # model_variance
+    q = (0.005/10) * (M[,median_axis[i]]$JULD - M[,median_axis[i-1]]$JULD) # 0.01 every 10 days
+    # model guess
+    x = kal_off[median_axis[i-1]] # model by a constant
+    # model variance
+    P = kal_var[median_axis[i-1]] + q #model by a constant
+    
+    # innovation
+    y = all_minima[median_axis[i]] - x
+    
+    # innovation covariance
+    S = P + r
+    
+    # Kalman gain
+    K = P / S
+    
+    # updated estimates
+    kal_off[median_axis[i]] = x + K*y
+    kal_var[median_axis[i]] = (1-K) * P 
+}
+for(i in 1:n_prof) {
+    if (is.na(kal_off[i])) {
+        kal_off[i] = kal_off[i-1]
+    }
+}
+
 
 ### plot
 
-plot_minima(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, plot_name, y_zoom, greylist_axis)
+plot_minima(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, kal_off, plot_name, y_zoom, greylist_axis)
 
 

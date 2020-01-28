@@ -3,8 +3,9 @@
 # compare methods 1 and 3 from the ADMT20 presentation by Xing
 #############################################################################
 require(wesanderson)
+library(RColorBrewer)
 
-plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, plot_name, y_zoom, greylist_axis) {
+plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, offset_kal, plot_name, y_zoom, greylist_axis) {
     n_prof = dim(M)[2]
     
     juld = rep(NA, n_prof)
@@ -33,21 +34,42 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
 		Yrange = y_zoom
     }
     
-    my_colors = wes_palette("Darjeeling1", 3)
-    col_min = my_colors[3]
-    col_med = "#000000"
-    col_auto = my_colors[2]
-    col_DMMC = my_colors[1]
+    #my_colors = wes_palette("Darjeeling1", 3)
+    #col_min = my_colors[3]
+    #col_med = "#000000"
+    #col_auto = my_colors[2]
+    #col_DMMC = my_colors[1]
+    my_colors = brewer.pal(5, "Set1")
+    col_min = my_colors[5]
+    col_med = my_colors[1]
+    col_auto = my_colors[3]
+    col_DMMC = my_colors[2]
+    col_kal = my_colors[4]
+    
     
     plot(dates, offset_1, xlab = "time", ylab="chla offset",xlim=Xrange, ylim=Yrange, col=col_min)
     title(main=paste("Visualisation of the different methods for the computation of the dark offset of",WMO), 
           sub=paste("median size =",median_size))
     points(dates, offset_auto, pch="x", col=col_auto)
     points(dates, offset_DMMC, pch="+", col=col_DMMC)
+    points(dates, offset_kal, pch="+", col=col_kal)
     points(dates, rep(Yrange[2]+(Yrange[2]-Yrange[1])*0.02, n_prof), col=QC_colors, pch=15)
     lines(dates, offset_3, col=col_med)
-    legend(x=Xrange[2]*0.8+Xrange[1]*0.2, y=Yrange[2], legend=c("profile minimum","median of minima","automatic offset","DMMC offset"), 
-           pch=c('o','_','x','+'), col=c(col_min, col_med, col_auto, col_DMMC))
+    
+    leg_text = c("profile minimum","median of minima","automatic offset")
+    leg_symb = c('o','_','x')
+    leg_col = c(col_min, col_med, col_auto)
+    if (!all(is.na(offset_DMMC))) {
+        leg_text = c(leg_text, "DMMC offset")
+        leg_symb = c(leg_symb, '+')
+        leg_col = c(leg_col, col_DMMC)
+    }
+    if (!all(is.na(offset_kal))) {
+        leg_text = c(leg_text, "Kalman filtered minima")
+        leg_symb = c(leg_symb, '+')
+        leg_col = c(leg_col, col_kal)
+    }
+    legend(x=Xrange[2]*0.8+Xrange[1]*0.2, y=Yrange[2], legend=leg_text, pch=leg_symb, col=leg_col)
     
     dev.off()
     
