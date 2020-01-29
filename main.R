@@ -31,6 +31,7 @@ y_zoom_call = uf[4]
 use_DMMC = as.logical(uf[5])
 use_kal = as.logical(uf[6])
 runmed_size = as.numeric(uf[7])
+date_axis = as.logical(uf[8])
 
 # apply default values if necessary
 
@@ -175,6 +176,6 @@ if (use_kal) {
 ### plot
 
 plot_minima(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, kal_off, offset_runmed,
-            plot_name, y_zoom, greylist_axis, runmed_size)
+            plot_name, y_zoom, greylist_axis, runmed_size, date_axis)
 
 

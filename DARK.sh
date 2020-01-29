@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() { 
-	echo "Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-r <runmed_size>] [-y <y_zoom>] [-hkM]
+	echo "Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-r <runmed_size>] [-y <y_zoom>] [-dhkM]
 Do '$0 -h' for help" 1>&2
 	exit 1 
 }
@@ -12,7 +12,7 @@ helprint() {
 DARK makes analytics plots to compare methods for the computation of the dark offset
 of chla in BGC-ARGO
 
-Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-r <runmed_size>] [-y <y_zoom>] [-hkM]
+Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-r <runmed_size>] [-y <y_zoom>] [-dhkM]
 
 ### Options
 
@@ -26,6 +26,7 @@ Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-r <runmed_size>]
                      of the float
 [-y <y_zoom>] : Specify bounds for the y-axis with the format 'MIN.min;MAX.max' with the
                 single quotation marks.
+[-d] : Use dates as horizontal axis instead of profile index.
 [-h] : help
 [-M] : Include offsets computed by DMMC, warning : long.
 
@@ -41,8 +42,9 @@ y_zoom=NA
 use_DMMC=FALSE
 use_kal=FALSE
 runmed_size=NA
+date_axis=FALSE
 
-while getopts W:n:m:y:Mkr:h option
+while getopts W:n:m:y:Mkr:dh option
 do
 case "${option}"
 in
@@ -53,10 +55,11 @@ y) y_zoom=${OPTARG};;
 M) use_DMMC=TRUE;;
 k) use_kal=TRUE;;
 r) runmed_size=${OPTARG};;
+d) date_axis=TRUE;;
 h) helprint;;
 *) usage;;
 esac
 done
 
 
-Rscript ~/Documents/dark_chla/dark_offset_chla/main.R $WMO $plot_name $median_size $y_zoom $use_DMMC $use_kal $runmed_size
+Rscript ~/Documents/dark_chla/dark_offset_chla/main.R $WMO $plot_name $median_size $y_zoom $use_DMMC $use_kal $runmed_size $date_axis

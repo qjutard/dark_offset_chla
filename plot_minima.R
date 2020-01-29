@@ -6,13 +6,17 @@ require(wesanderson)
 library(RColorBrewer)
 
 plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, offset_kal, offset_runmed,
-                        plot_name, y_zoom, greylist_axis, runmed_size) {
+                        plot_name, y_zoom, greylist_axis, runmed_size, date_axis) {
     n_prof = dim(M)[2]
     
     juld = rep(NA, n_prof)
     percent_qc4 = rep(NA, n_prof)
+    profile_id = rep(NA, n_prof)
     for (i in 1:n_prof) {
         juld[i] = M[,i]$JULD
+        
+        profile_id[i] = M[,i]$profile_id
+        
         profile_qc = M[,i]$PARAM_QC
         profile_qc = profile_qc[which(!is.na(profile_qc)&profile_qc!=" ")]
         if (length(profile_qc)>0) {
@@ -27,7 +31,13 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
     
     png(plot_name, width = 800, height = 400)
     
-    Xrange = range(as.numeric(dates), na.rm=T)
+    if (date_axis) {
+        Xrange = range(as.numeric(dates), na.rm=T)
+        Xdata = dates
+    } else {
+        Xrange = range(profile_id, na.rm=T)
+        Xdata = profile_id
+    }
 	if (is.null(y_zoom)) {
     	Yrange = range(c(offset_1, offset_auto, offset_DMMC), na.rm=T)
     	Yrange[2] = Yrange[2]+(Yrange[2]-Yrange[1])*0.4
@@ -48,20 +58,25 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
     col_kal = my_colors[4]
     col_runmed = my_colors[5]
     
+    Xlabel = "profile number"
+    if (date_axis) {
+        Xlabel = "time"
+    }
+    
     subtitle = paste("median size in minimum =", median_size)
     if (!is.na(runmed_size)) {
         subtitle = paste(subtitle, "; median size in runmed =", runmed_size)
     }
     
-    plot(dates, offset_1, xlab = "time", ylab="chla offset",xlim=Xrange, ylim=Yrange, col=col_min)
+    plot(Xdata, offset_1, xlab = Xlabel, ylab="chla offset",xlim=Xrange, ylim=Yrange, col=col_min)
     title(main=paste("Visualisation of the different methods for the computation of the dark offset of",WMO), 
           sub=subtitle)
-    points(dates, offset_auto, pch="x", col=col_auto)
-    points(dates, offset_DMMC, pch="+", col=col_DMMC)
-    points(dates, offset_kal, pch="+", col=col_kal)
-    points(dates, offset_runmed, pch="+", col=col_runmed)
-    points(dates, rep(Yrange[2]+(Yrange[2]-Yrange[1])*0.02, n_prof), col=QC_colors, pch=15)
-    lines(dates, offset_3, col=col_med)
+    points(Xdata, offset_auto, pch="x", col=col_auto)
+    points(Xdata, offset_DMMC, pch="+", col=col_DMMC)
+    points(Xdata, offset_kal, pch="+", col=col_kal)
+    points(Xdata, offset_runmed, pch="+", col=col_runmed)
+    points(Xdata, rep(Yrange[2]+(Yrange[2]-Yrange[1])*0.02, n_prof), col=QC_colors, pch=15)
+    lines(Xdata, offset_3, col=col_med)
     
     leg_text = c("profile minimum","median of minima","automatic offset")
     leg_symb = c('o','_','x')
