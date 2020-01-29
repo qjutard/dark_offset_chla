@@ -29,6 +29,8 @@ plot_name = uf[2]
 median_size = uf[3]
 y_zoom_call = uf[4]
 use_DMMC = as.logical(uf[5])
+use_kal = as.logical(uf[6])
+runmed_size = as.numeric(uf[7])
 
 # apply default values if necessary
 
@@ -36,7 +38,7 @@ if (plot_name=="NA") {
     plot_name = paste("DARK_", WMO, ".png", sep="")
 }
 if (median_size=="NA") {
-    median_size = 1
+    median_size = 5
 }
 if (y_zoom_call=="NA") {
 	y_zoom = NULL
@@ -116,49 +118,63 @@ median_axis = which(is.na(greylist_axis) & is_deep & !is.na(all_minima))
 offset_3 = rep(median(all_minima[median_axis], na.rm=T), n_prof)
 offset_1 = all_minima
 
+offset_runmed = rep(NA, n_prof)
+if (!is.na(runmed_size)) {
+    offset_runmed[median_axis] = runmed(all_minima[median_axis], runmed_size, endrule="constant")
+    offset_runmed[1] = offset_runmed[median_axis[1]]
+    for(i in 1:n_prof) {
+        if (is.na(offset_runmed[i])) {
+            offset_runmed[i] = offset_runmed[i-1]
+        }
+    }
+}
+
+
 ### Kalman filter on min for DM
 
 kal_off = rep(NA, n_prof)
 kal_var = rep(NA, n_prof)
 
-# initialize
-kal_off[1:median_axis[1]] = unique(offset_3) # keep median for the first values
-#kal_off[median_axis[1]] = unique(offset_3) # is NA if no valid profile on median_axis
-kal_var[median_axis[1]] = sd(all_minima[median_axis])*10
-
-for (i in 2:length(median_axis)) {
+if (use_kal) {
+    # initialize
+    kal_off[1:median_axis[1]] = unique(offset_3) # keep median for the first values
+    kal_off[median_axis[1]] = unique(offset_3) # is NA if no valid profile on median_axis
+    kal_var[median_axis[1]] = sd(all_minima[median_axis])*10
     
-    # observation variance
-    r = 0.01 + all_minima_var[median_axis[i]]
-    # model_variance
-    q = (0.005/10) * (M[,median_axis[i]]$JULD - M[,median_axis[i-1]]$JULD) # 0.01 every 10 days
-    # model guess
-    x = kal_off[median_axis[i-1]] # model by a constant
-    # model variance
-    P = kal_var[median_axis[i-1]] + q #model by a constant
-    
-    # innovation
-    y = all_minima[median_axis[i]] - x
-    
-    # innovation covariance
-    S = P + r
-    
-    # Kalman gain
-    K = P / S
-    
-    # updated estimates
-    kal_off[median_axis[i]] = x + K*y
-    kal_var[median_axis[i]] = (1-K) * P 
-}
-for(i in 1:n_prof) {
-    if (is.na(kal_off[i])) {
-        kal_off[i] = kal_off[i-1]
+    for (i in 2:length(median_axis)) {
+        
+        # observation variance
+        r = 0.01 + all_minima_var[median_axis[i]]
+        # model_variance
+        q = (0.001/10) * (M[,median_axis[i]]$JULD - M[,median_axis[i-1]]$JULD) # 0.01 every 10 days
+        # model guess
+        x = kal_off[median_axis[i-1]] # model by a constant
+        # model variance
+        P = kal_var[median_axis[i-1]] + q #model by a constant
+        
+        # innovation
+        y = all_minima[median_axis[i]] - x
+        
+        # innovation covariance
+        S = P + r
+        
+        # Kalman gain
+        K = P / S
+        
+        # updated estimates
+        kal_off[median_axis[i]] = x + K*y
+        kal_var[median_axis[i]] = (1-K) * P 
+    }
+    for(i in 1:n_prof) {
+        if (is.na(kal_off[i])) {
+            kal_off[i] = kal_off[i-1]
+        }
     }
 }
 
-
 ### plot
 
-plot_minima(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, kal_off, plot_name, y_zoom, greylist_axis)
+plot_minima(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, kal_off, offset_runmed,
+            plot_name, y_zoom, greylist_axis, runmed_size)
 
 

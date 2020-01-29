@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() { 
-	echo "Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-y <y_zoom>] [-hM]
+	echo "Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-r <runmed_size>] [-y <y_zoom>] [-hkM]
 Do '$0 -h' for help" 1>&2
 	exit 1 
 }
@@ -12,7 +12,7 @@ helprint() {
 DARK makes analytics plots to compare methods for the computation of the dark offset
 of chla in BGC-ARGO
 
-Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-y <y_zoom>] [-hM]
+Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-r <runmed_size>] [-y <y_zoom>] [-hkM]
 
 ### Options
 
@@ -20,8 +20,10 @@ Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-y <y_zoom>] [-hM
 [-n <plot_name>] : Specify a file name for the output (with pathway), if not specified
                    the default is 'DARK_WMO.png' where WMO is replaced by the 7 digit WMO
                    number. Please use a '.png' extension in your file name.
-[-m <median_size>] : Specify a size for median running filters, default is 1 which
-                     corresponds to no filtering
+[-m <median_size>] : Specify a size for median running filters in the computation of
+                     minima, default is 5
+[-r <runmed_size>] : Specify a size for the optional running median filter along the life
+                     of the float
 [-y <y_zoom>] : Specify bounds for the y-axis with the format 'MIN.min;MAX.max' with the
                 single quotation marks.
 [-h] : help
@@ -37,8 +39,10 @@ plot_name=NA
 median_size=NA
 y_zoom=NA
 use_DMMC=FALSE
+use_kal=FALSE
+runmed_size=NA
 
-while getopts W:n:m:y:Mh option
+while getopts W:n:m:y:Mkr:h option
 do
 case "${option}"
 in
@@ -47,10 +51,12 @@ n) plot_name=${OPTARG};;
 m) median_size=${OPTARG};;
 y) y_zoom=${OPTARG};;
 M) use_DMMC=TRUE;;
+k) use_kal=TRUE;;
+r) runmed_size=${OPTARG};;
 h) helprint;;
 *) usage;;
 esac
 done
 
 
-Rscript ~/Documents/dark_chla/dark_offset_chla/main.R $WMO $plot_name $median_size $y_zoom $use_DMMC
+Rscript ~/Documents/dark_chla/dark_offset_chla/main.R $WMO $plot_name $median_size $y_zoom $use_DMMC $use_kal $runmed_size

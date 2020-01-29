@@ -5,7 +5,8 @@
 require(wesanderson)
 library(RColorBrewer)
 
-plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, offset_kal, plot_name, y_zoom, greylist_axis) {
+plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, offset_kal, offset_runmed,
+                        plot_name, y_zoom, greylist_axis, runmed_size) {
     n_prof = dim(M)[2]
     
     juld = rep(NA, n_prof)
@@ -39,20 +40,26 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
     #col_med = "#000000"
     #col_auto = my_colors[2]
     #col_DMMC = my_colors[1]
-    my_colors = brewer.pal(5, "Set1")
-    col_min = my_colors[5]
+    my_colors = brewer.pal(9, "Set1")
+    col_min = "#000000" #my_colors[5]
     col_med = my_colors[1]
     col_auto = my_colors[3]
     col_DMMC = my_colors[2]
     col_kal = my_colors[4]
+    col_runmed = my_colors[5]
     
+    subtitle = paste("median size in minimum =", median_size)
+    if (!is.na(runmed_size)) {
+        subtitle = paste(subtitle, "; median size in runmed =", runmed_size)
+    }
     
     plot(dates, offset_1, xlab = "time", ylab="chla offset",xlim=Xrange, ylim=Yrange, col=col_min)
     title(main=paste("Visualisation of the different methods for the computation of the dark offset of",WMO), 
-          sub=paste("median size =",median_size))
+          sub=subtitle)
     points(dates, offset_auto, pch="x", col=col_auto)
     points(dates, offset_DMMC, pch="+", col=col_DMMC)
     points(dates, offset_kal, pch="+", col=col_kal)
+    points(dates, offset_runmed, pch="+", col=col_runmed)
     points(dates, rep(Yrange[2]+(Yrange[2]-Yrange[1])*0.02, n_prof), col=QC_colors, pch=15)
     lines(dates, offset_3, col=col_med)
     
@@ -68,6 +75,11 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
         leg_text = c(leg_text, "Kalman filtered minima")
         leg_symb = c(leg_symb, '+')
         leg_col = c(leg_col, col_kal)
+    }
+    if (!all(is.na(offset_runmed))) {
+        leg_text = c(leg_text, "runmed on minima")
+        leg_symb = c(leg_symb, '+')
+        leg_col = c(leg_col, col_runmed)
     }
     legend(x=Xrange[2]*0.8+Xrange[1]*0.2, y=Yrange[2], legend=leg_text, pch=leg_symb, col=leg_col)
     
