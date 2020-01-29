@@ -32,6 +32,7 @@ use_DMMC = as.logical(uf[5])
 use_kal = as.logical(uf[6])
 runmed_size = as.numeric(uf[7])
 date_axis = as.logical(uf[8])
+do_write = as.logical(uf[9])
 
 # apply default values if necessary
 
@@ -116,8 +117,8 @@ all_minima[which(is.infinite(all_minima))] = NA
 
 median_axis = which(is.na(greylist_axis) & is_deep & !is.na(all_minima))
 
-offset_3 = rep(median(all_minima[median_axis], na.rm=T), n_prof)
-offset_1 = all_minima
+offset_med = rep(median(all_minima[median_axis], na.rm=T), n_prof)
+offset_min = all_minima
 
 offset_runmed = rep(NA, n_prof)
 if (!is.na(runmed_size)) {
@@ -133,13 +134,13 @@ if (!is.na(runmed_size)) {
 
 ### Kalman filter on min for DM
 
-kal_off = rep(NA, n_prof)
+offset_kal = rep(NA, n_prof)
 kal_var = rep(NA, n_prof)
 
 if (use_kal) {
     # initialize
-    kal_off[1:median_axis[1]] = unique(offset_3) # keep median for the first values
-    kal_off[median_axis[1]] = unique(offset_3) # is NA if no valid profile on median_axis
+    offset_kal[1:median_axis[1]] = unique(offset_med) # keep median for the first values
+    offset_kal[median_axis[1]] = unique(offset_med) # is NA if no valid profile on median_axis
     kal_var[median_axis[1]] = sd(all_minima[median_axis])*10
     
     for (i in 2:length(median_axis)) {
@@ -149,7 +150,7 @@ if (use_kal) {
         # model_variance
         q = (0.001/10) * (M[,median_axis[i]]$JULD - M[,median_axis[i-1]]$JULD) # 0.01 every 10 days
         # model guess
-        x = kal_off[median_axis[i-1]] # model by a constant
+        x = offset_kal[median_axis[i-1]] # model by a constant
         # model variance
         P = kal_var[median_axis[i-1]] + q #model by a constant
         
@@ -163,19 +164,36 @@ if (use_kal) {
         K = P / S
         
         # updated estimates
-        kal_off[median_axis[i]] = x + K*y
+        offset_kal[median_axis[i]] = x + K*y
         kal_var[median_axis[i]] = (1-K) * P 
     }
     for(i in 1:n_prof) {
-        if (is.na(kal_off[i])) {
-            kal_off[i] = kal_off[i-1]
+        if (is.na(offset_kal[i])) {
+            offset_kal[i] = offset_kal[i-1]
         }
     }
 }
 
+cut_names = str_split(name_list, "/", simplify = T)
+cut_names = cut_names[,length(cut_names[1,])]
+cut_names = str_sub(cut_names, 3, 14)
+
+if (do_write) {
+    all_offsets = list(offset_min, offset_med, offset_kal, offset_runmed)
+    write_names = c("minima", "median", "kalman", "runmed")
+    write_filenames = paste("offsets_", WMO, "_", write_names, ".t", sep="")
+    
+    for (i in 1:length(all_offsets)) {
+        if (!all(is.na(all_offsets[[i]]))) {
+            write.table(list(cut_names, all_offsets[[i]]), write_filenames[i], col.names = FALSE, row.names = FALSE)
+        }
+    }
+    
+}
+
 ### plot
 
-plot_minima(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, kal_off, offset_runmed,
+plot_minima(M, WMO, median_size, offset_min, offset_med, offset_auto, offset_DMMC, offset_kal, offset_runmed,
             plot_name, y_zoom, greylist_axis, runmed_size, date_axis)
 
 
