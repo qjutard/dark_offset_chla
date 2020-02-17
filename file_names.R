@@ -8,8 +8,6 @@ require(stringi)
 
 file_names <- function(index_ifremer, path_to_netcdf_before_WMO, WMO, path_to_netcdf_after_WMO) {
 	
-	# TODO : implement
-	
     files<-as.character(index_ifremer[,1]) #retrieve the path of each netcfd file
     ident<-strsplit(files,"/") #separate the different roots of the files paths
     ident<-matrix(unlist(ident), ncol=4, byrow=TRUE)
@@ -24,7 +22,15 @@ file_names <- function(index_ifremer, path_to_netcdf_before_WMO, WMO, path_to_ne
 	prof_id = paste(path_to_netcdf_before_WMO, WMO, path_to_netcdf_after_WMO, "B?", prof_id, sep="")
 	
 	# identify R or D file
-    name_list = system2("ls", prof_id, stdout=TRUE) 
-	
+	name_list = rep(NA, length(prof_id))
+	for (i in 1:length(prof_id)) {
+        ls_match = system2("ls", prof_id[i], stdout=TRUE) 
+        if (length(ls_match) == 2) { # if both R and D files exist
+            name_list[i] = ls_match[1] # use the D file which is first in alphabetical order
+        } else {
+            name_list[i] = ls_match
+        }
+	}
+    
 	return(name_list)
 }

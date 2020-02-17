@@ -129,7 +129,7 @@ open_profiles <- function(profile_name, PARAM_NAME, DEEP_EST, index_ifremer, ind
             ## what is the QC and what to do ?
             if (prof_in_greylist){
                 if (index_greylist$QUALITY_CODE[j] == 4) {
-                    print(paste("profile on the greylist with QC 4 at index ", j, " with comment : ", index_greylist$COMMENT[j], sep=""))
+                    #print(paste("profile on the greylist with QC 4 at index ", j, " with comment : ", index_greylist$COMMENT[j], sep=""))
                     is_greylist = 4
                 } else if (index_greylist$QUALITY_CODE[j] == 3) {
                     is_greylist = 3
