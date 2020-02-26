@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() { 
-	echo "Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-r <runmed_size>] [-y <y_zoom>] [-dhkMw]
+	echo "Usage: $0 -W <WMO_number> [-m <median_size>] [-n <plot_name>] [-r <runmed_size>] [-y <y_zoom>] [-dhkMw]
 Do '$0 -h' for help" 1>&2
 	exit 1 
 }
@@ -12,25 +12,27 @@ helprint() {
 DARK makes analytics plots to compare methods for the computation of the dark offset
 of chla in BGC-ARGO
 
-Usage: $0 -W <WMO_number> [-n <plot_name>] [-m <median_size>] [-r <runmed_size>] [-y <y_zoom>] [-dhkMw]
+Usage: $0 -W <WMO_number> [-m <median_size>] [-n <plot_name>] [-r <runmed_size>] [-y <y_zoom>] [-dhkMw]
 
 ### Options
 
 -W <WMO_number> : 7 digits WMO number of the float to consider.
+[-m <median_size>] : Specify a size for median running filters in the computation of
+                     minima, default is 5.
 [-n <plot_name>] : Specify a file name for the output (with pathway), if not specified
                    the default is 'DARK_WMO.png' where WMO is replaced by the 7 digit WMO
                    number. Please use a '.png' extension in your file name.
-[-m <median_size>] : Specify a size for median running filters in the computation of
-                     minima, default is 5.
 [-r <runmed_size>] : Specify a size for the optional running median filter along the life
                      of the float.
 [-y <y_zoom>] : Specify bounds for the y-axis with the format 'MIN.min;MAX.max' with the
                 single quotation marks.
 [-d] : Use dates as horizontal axis instead of profile index.
 [-h] : help
+[-k] : Compute Kalman filtered minima (experimental, not recommended)
 [-M] : Include offsets computed by DMMC, warning : long.
 [-w] : For each method considered except DMMC, write a file with the profile names in
        a format consistent with DMMC and with the offsets computed by the method.
+
 
 #########################################################################################
 " 1>&2
