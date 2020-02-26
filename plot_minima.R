@@ -2,10 +2,10 @@
 # Defines a function that plots minima of profiles from a float to
 # compare methods 1 and 3 from the ADMT20 presentation by Xing
 #############################################################################
-require(wesanderson)
-library(RColorBrewer)
+#require(wesanderson)
+require(RColorBrewer)
 
-plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, offset_DMMC, offset_kal, offset_runmed,
+plot_minima <- function(M, WMO, median_size, offset_min, offset_med, offset_auto, offset_DMMC, offset_kal, offset_runmed,
                         plot_name, y_zoom, greylist_axis, runmed_size, date_axis) {
     n_prof = dim(M)[2]
     
@@ -39,7 +39,7 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
         Xdata = profile_id
     }
 	if (is.null(y_zoom)) {
-    	Yrange = range(c(offset_1, offset_auto, offset_DMMC), na.rm=T)
+    	Yrange = range(c(offset_min, offset_auto, offset_DMMC), na.rm=T)
     	Yrange[2] = Yrange[2]+(Yrange[2]-Yrange[1])*0.4
     } else {
 		Yrange = y_zoom
@@ -68,7 +68,7 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
         subtitle = paste(subtitle, "; median size in runmed =", runmed_size)
     }
     
-    plot(Xdata, offset_1, xlab = Xlabel, ylab="chla offset",xlim=Xrange, ylim=Yrange, col=col_min)
+    plot(Xdata, offset_min, xlab = Xlabel, ylab="chla offset",xlim=Xrange, ylim=Yrange, col=col_min)
     title(main=paste("Visualisation of the different methods for the computation of the dark offset of",WMO), 
           sub=subtitle)
     points(Xdata, offset_auto, pch="x", col=col_auto)
@@ -76,7 +76,7 @@ plot_minima <- function(M, WMO, median_size, offset_1, offset_3, offset_auto, of
     points(Xdata, offset_kal, pch="+", col=col_kal)
     points(Xdata, offset_runmed, pch="+", col=col_runmed)
     points(Xdata, rep(Yrange[2]+(Yrange[2]-Yrange[1])*0.02, n_prof), col=QC_colors, pch=15)
-    lines(Xdata, offset_3, col=col_med)
+    lines(Xdata, offset_med, col=col_med)
     
     leg_text = c("profile minimum","median of minima","automatic offset")
     leg_symb = c('o','_','x')

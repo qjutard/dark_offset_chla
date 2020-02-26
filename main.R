@@ -194,7 +194,8 @@ if (do_write) {
 
 ### plot
 
-plot_minima(M, WMO, median_size, offset_min, offset_med, offset_auto, offset_DMMC, offset_kal, offset_runmed,
-            plot_name, y_zoom, greylist_axis, runmed_size, date_axis)
+plot_minima(M=M, WMO=WMO, median_size=median_size, offset_min=offset_min, offset_med=offset_med, offset_auto=offset_auto, offset_DMMC=offset_DMMC, 
+            offset_kal=offset_kal, offset_runmed=offset_runmed, plot_name=plot_name, y_zoom=y_zoom, greylist_axis=greylist_axis, runmed_size=runmed_size, 
+            date_axis=date_axis)
 
 
