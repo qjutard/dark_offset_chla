@@ -1,7 +1,7 @@
 #############################################################################
 # Main script to build a list of profiles, call computations of offset, 
 # and create desired plots
-# open_profiles.R and file_names.R are taken directly from the work on BGTS
+# open_profiles.R and file_names.R adapted from the work on BGTS
 # available at https://github.com/qjutard/time_series_plot
 #############################################################################
 
@@ -48,27 +48,28 @@ if (y_zoom_call=="NA") {
 	y_zoom = as.numeric(unlist(strsplit(y_zoom_call, ";")))
 }
 
-
-#WMO = "6901524"
-#median_size = 5
+num_cores = detectCores()
 
 ### Build list of file names from WMO and argo_index
 
-index_ifremer = read.table(path_to_index_ifremer, skip=9, sep = ",")
+index_ifremer = read.table(path_to_index_ifremer, sep=",", header = T)
 
-name_list = file_names(index_ifremer, path_to_netcdf_before_WMO, WMO, path_to_netcdf_after_WMO)
-name_meta = paste(path_to_netcdf_before_WMO, WMO, "/", WMO, "_meta.nc", sep="")
+names = file_names(index_ifremer, path_to_netcdf, WMO)
+name_list = names$name_list
+name_meta = names$name_meta
 
 ### Get a list with information on all profiles
-index_greylist = read.csv(path_to_index_greylist, sep = ",") # if greylist is useful at some point
+index_greylist = read.csv(path_to_index_greylist, sep = ",")
 
 DEEP_EST= NULL
 if (use_DMMC) {
-    DEEP_EST = Dark_MLD_table_coriolis(WMO, "/DATA/ftp.ifremer.fr/ifremer/argo/dac/", index_ifremer)
+    DEEP_EST = Dark_MLD_table_coriolis(WMO, path_to_netcdf, index_ifremer, n_cores=num_cores)
 }
 
-numCores = detectCores()
-M = mcmapply(open_profiles, name_list, MoreArgs=list("CHLA", DEEP_EST, index_ifremer, index_greylist, WMO, use_DMMC=use_DMMC), mc.cores=numCores, USE.NAMES=FALSE)
+M = mcmapply(open_profiles, name_list, 
+             MoreArgs=list(PARAM_NAME="CHLA", index_ifremer=index_ifremer, index_greylist=index_greylist, WMO=WMO, 
+                           use_DMMC=use_DMMC, DEEP_EST=DEEP_EST, path_to_netcdf=path_to_netcdf), 
+             mc.cores=num_cores, USE.NAMES=FALSE)
 
 ### compute minima
 
