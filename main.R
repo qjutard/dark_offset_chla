@@ -11,14 +11,14 @@ library(MASS)
 library(stringr)
 library(parallel)
 library(stringi)
-library(wesanderson)
+library(RColorBrewer)
 
 source("~/Documents/dark_chla/dark_offset_chla/pathways.R")
 source(paste(path_to_source, "file_names.R", sep=""))
 source(paste(path_to_source, "open_profiles.R", sep=""))
 source(paste(path_to_source, "plot_minima.R", sep=""))
-source("~/Documents/cornec_chla_qc/chl_bbp_ttt/process_files.R")
-source("~/Documents/cornec_chla_qc/chl_bbp_ttt/error_message.R")
+source(paste(path_to_DMMC, "process_files.R", sep="")) # only necessary if -M is going to be used
+source(paste(path_to_DMMC, "error_message.R", sep="")) # only necessary if -M is going to be used
 
 ### Set parameters
 
