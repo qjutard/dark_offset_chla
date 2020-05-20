@@ -78,7 +78,7 @@ plot_minima <- function(M, WMO, median_size, offset_min, offset_med, offset_auto
     points(Xdata, rep(Yrange[2]+(Yrange[2]-Yrange[1])*0.02, n_prof), col=QC_colors, pch=15)
     lines(Xdata, offset_med, col=col_med)
     
-    leg_text = c("profile minimum","median of minima","automatic offset")
+    leg_text = c("profile minimum","median of minima","RTQC offset")
     leg_symb = c('o','_','x')
     leg_col = c(col_min, col_med, col_auto)
     if (!all(is.na(offset_DMMC))) {
