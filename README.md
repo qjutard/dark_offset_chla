@@ -7,7 +7,7 @@ By default DARK plots the minima and their median, as well as the offset that wa
 * Clone the repository where you want it ( `$ git clone https://github.com/qjutard/dark_offset_chla` )
 * You will need to have R installed as well as the libraries called in *main.R*
 * Get the latest profile index and greylist if necessary
-* Adapt pathway definitions in *pathways.R* and *main.R*
+* Adapt pathway definitions in *pathways.R*, *DARK.sh*, and *main.R*
 * Create an alias in your *.bashrc* or *.bash_aliases* ( `alias DARK="~/path/to/repository/DARK.sh"` )
 * Go to the working directory (where you want outputs to be written)
 * READ THE HELP ( `$ DARK -h` )
