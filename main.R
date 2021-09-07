@@ -17,8 +17,6 @@ source("~/Documents/dark_chla/dark_offset_chla/pathways.R")
 source(paste(path_to_source, "file_names.R", sep=""))
 source(paste(path_to_source, "open_profiles.R", sep=""))
 source(paste(path_to_source, "plot_minima.R", sep=""))
-source(paste(path_to_DMMC, "process_files.R", sep="")) # only necessary if -M is going to be used
-source(paste(path_to_DMMC, "error_message.R", sep="")) # only necessary if -M is going to be used
 
 ### Set parameters
 
@@ -63,7 +61,9 @@ index_greylist = read.csv(path_to_index_greylist, sep = ",")
 
 DEEP_EST= NULL
 if (use_DMMC) {
-    DEEP_EST = Dark_MLD_table_coriolis(WMO, path_to_netcdf, index_ifremer, n_cores=num_cores)
+  source(paste(path_to_DMMC, "process_files.R", sep="")) # only necessary if -M is going to be used
+  source(paste(path_to_DMMC, "error_message.R", sep="")) # only necessary if -M is going to be used
+  DEEP_EST = Dark_MLD_table_coriolis(WMO, path_to_netcdf, index_ifremer, n_cores=num_cores)
 }
 
 M = mcmapply(open_profiles, name_list, 
@@ -85,12 +85,13 @@ factory_dark = as.numeric(chla_calib_dark[2]) # get the dark coefficient as a nu
 nc_close(metanc)
 
 n_prof = dim(M)[2]
-all_minima = rep(NA, n_prof)
+smoothed_minima = rep(NA, n_prof)
+minima = rep(NA, n_prof)
 offset_auto = rep(NA, n_prof)
 offset_DMMC = rep(NA, n_prof)
 greylist_axis = rep(NA, n_prof)
 is_deep = rep(NA, n_prof)
-all_minima_var = rep(NA, n_prof)
+smoothed_minima_var = rep(NA, n_prof)
 min_pres = rep(NA, n_prof)
 for (i in seq(1, n_prof)) {
     chla = M[,i]$PARAM
@@ -102,10 +103,12 @@ for (i in seq(1, n_prof)) {
     pres = pres[which(!is.na(chla))]
     
     chla_smoothed = runmed(chla, median_size, endrule="constant")
-    all_minima[i] = min(chla_smoothed, na.rm = T)
-    min_pres[i] = min(pres[which(chla_smoothed==all_minima[i])], na.rm=T)
-    all_minima_var[i] = var(chla_smoothed[which(pres>=min_pres[i])], na.rm = T)
+    smoothed_minima[i] = min(chla_smoothed, na.rm = T)
+    min_pres[i] = min(pres[which(chla_smoothed==smoothed_minima[i])], na.rm=T)
+    smoothed_minima_var[i] = var(chla_smoothed[which(pres>=min_pres[i])], na.rm = T)
     
+    minima[i] = min(chla, na.rm = T)
+
     is_deep[i] = (max(pres, na.rm=T)>800)
     
     offset_auto[i] = (M[,i]$DARK_CHLA - factory_dark) * M[,i]$SCALE_CHLA
@@ -114,16 +117,20 @@ for (i in seq(1, n_prof)) {
     
     greylist_axis[i] = M[,i]$is_greylist
 }
-all_minima[which(is.infinite(all_minima))] = NA
+smoothed_minima[which(is.infinite(smoothed_minima))] = NA
 
-median_axis = which(is.na(greylist_axis) & is_deep & !is.na(all_minima))
+median_axis = which(is.na(greylist_axis) & is_deep & !is.na(smoothed_minima))
+median_axis_2021 = which(is_deep & !is.na(minima))
+median_axis_2021 = median_axis_2021[1:min(5,length(median_axis_2021))] # use the first 5 values or 
+                                                                       # all available
 
-offset_med = rep(median(all_minima[median_axis], na.rm=T), n_prof)
-offset_min = all_minima
+offset_med = rep(median(smoothed_minima[median_axis], na.rm=T), n_prof)
+offset_min = smoothed_minima
+offset_RTQC_2021 = rep(median(minima[median_axis]), n_prof)
 
 offset_runmed = rep(NA, n_prof)
 if (!is.na(runmed_size)) {
-    offset_runmed[median_axis] = runmed(all_minima[median_axis], runmed_size, endrule="constant")
+    offset_runmed[median_axis] = runmed(smoothed_minima[median_axis], runmed_size, endrule="constant")
     offset_runmed[1] = offset_runmed[median_axis[1]]
     for(i in 1:n_prof) {
         if (is.na(offset_runmed[i])) {
@@ -142,12 +149,12 @@ if (use_kal) {
     # initialize
     offset_kal[1:median_axis[1]] = unique(offset_med) # keep median for the first values
     offset_kal[median_axis[1]] = unique(offset_med) # is NA if no valid profile on median_axis
-    kal_var[median_axis[1]] = sd(all_minima[median_axis])*10
+    kal_var[median_axis[1]] = sd(smoothed_minima[median_axis])*10
     
     for (i in 2:length(median_axis)) {
         
         # observation variance
-        r = 0.01 + all_minima_var[median_axis[i]]
+        r = 0.01 + smoothed_minima_var[median_axis[i]]
         # model_variance
         q = (0.001/10) * (M[,median_axis[i]]$JULD - M[,median_axis[i-1]]$JULD) # 0.01 every 10 days
         # model guess
@@ -156,7 +163,7 @@ if (use_kal) {
         P = kal_var[median_axis[i-1]] + q #model by a constant
         
         # innovation
-        y = all_minima[median_axis[i]] - x
+        y = smoothed_minima[median_axis[i]] - x
         
         # innovation covariance
         S = P + r
@@ -194,8 +201,10 @@ if (do_write) {
 
 ### plot
 
-plot_minima(M=M, WMO=WMO, median_size=median_size, offset_min=offset_min, offset_med=offset_med, offset_auto=offset_auto, offset_DMMC=offset_DMMC, 
-            offset_kal=offset_kal, offset_runmed=offset_runmed, plot_name=plot_name, y_zoom=y_zoom, greylist_axis=greylist_axis, runmed_size=runmed_size, 
+plot_minima(M=M, WMO=WMO, median_size=median_size, offset_min=offset_min, offset_med=offset_med, 
+            offset_auto=offset_auto, offset_DMMC=offset_DMMC, offset_kal=offset_kal,
+            offset_runmed=offset_runmed, offset_RTQC_2021=offset_RTQC_2021, plot_name=plot_name,
+            y_zoom=y_zoom, greylist_axis=greylist_axis, runmed_size=runmed_size, 
             date_axis=date_axis)
 
 

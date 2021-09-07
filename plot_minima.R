@@ -5,8 +5,9 @@
 #require(wesanderson)
 require(RColorBrewer)
 
-plot_minima <- function(M, WMO, median_size, offset_min, offset_med, offset_auto, offset_DMMC, offset_kal, offset_runmed,
-                        plot_name, y_zoom, greylist_axis, runmed_size, date_axis) {
+plot_minima <- function(M, WMO, median_size, offset_min, offset_med, offset_auto, offset_DMMC, 
+                        offset_kal, offset_runmed, offset_RTQC_2021, plot_name, y_zoom,
+                        greylist_axis, runmed_size, date_axis) {
     n_prof = dim(M)[2]
     
     juld = rep(NA, n_prof)
@@ -55,8 +56,9 @@ plot_minima <- function(M, WMO, median_size, offset_min, offset_med, offset_auto
     col_med = my_colors[1]
     col_auto = my_colors[3]
     col_DMMC = my_colors[2]
-    col_kal = my_colors[4]
+    col_kal = my_colors[6]
     col_runmed = my_colors[5]
+    col_RTQC_2021 = my_colors[4]
     
     Xlabel = "profile number"
     if (date_axis) {
@@ -76,11 +78,12 @@ plot_minima <- function(M, WMO, median_size, offset_min, offset_med, offset_auto
     points(Xdata, offset_kal, pch="+", col=col_kal)
     points(Xdata, offset_runmed, pch="+", col=col_runmed)
     points(Xdata, rep(Yrange[2]+(Yrange[2]-Yrange[1])*0.02, n_prof), col=QC_colors, pch=15)
-    lines(Xdata, offset_med, col=col_med)
+    lines(Xdata, offset_med, col=col_med, lwd=2)
+    lines(Xdata, offset_RTQC_2021, col=col_RTQC_2021, lwd=2)
     
-    leg_text = c("profile minimum","median of minima","RTQC offset")
-    leg_symb = c('o','_','x')
-    leg_col = c(col_min, col_med, col_auto)
+    leg_text = c("profile minimum", "median of minima", "2014 RTQC", "2021 RTQC")
+    leg_symb = c('o', '_', 'x', '_')
+    leg_col = c(col_min, col_med, col_auto, col_RTQC_2021)
     if (!all(is.na(offset_DMMC))) {
         leg_text = c(leg_text, "DMMC offset")
         leg_symb = c(leg_symb, '+')
